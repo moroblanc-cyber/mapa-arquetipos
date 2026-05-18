@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de los Arquetipos de la Personalidad</title>
+    <link rel="icon" type="image/png" href="Numerología Cabalistica.png">
     <style>
         :root {
             --gold: #d4a853;
@@ -1233,6 +1234,9 @@
     </div>
     <div class="biblio-acciones">
         <button onclick="crearCarpeta()">+ Nueva carpeta</button>
+        <button onclick="exportarBiblioteca()" style="margin-top:8px">↓ Exportar copia de seguridad</button>
+        <button onclick="document.getElementById('import-file').click()" style="margin-top:6px">↑ Importar copia de seguridad</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarBiblioteca(this)">
     </div>
     <div class="biblio-contenido" id="biblio-contenido"></div>
 </aside>
@@ -1256,6 +1260,7 @@
 <div class="toast" id="toast"></div>
 
 <header>
+    <img src="Numerología Cabalistica.png" alt="Icono" style="width:72px;height:72px;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;">
     <h1>Mapa de los Arquetipos</h1>
     <p>Numerologia de los 22 Arquetipos de la Personalidad</p>
 </header>
@@ -3679,6 +3684,38 @@ function abrirBiblioteca() {
 function cerrarBiblioteca() {
     document.getElementById('biblio-panel').classList.remove('active');
     document.getElementById('biblio-overlay').classList.remove('active');
+}
+
+function exportarBiblioteca() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) { mostrarToast('No hay datos que exportar'); return; }
+    const fecha = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([raw], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `biblioteca_arquetipos_${fecha}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function importarBiblioteca(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data.personas || !data.carpetas) throw new Error('Formato inválido');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            cargarBiblioteca();
+            renderBiblioteca();
+            mostrarToast('Biblioteca importada correctamente');
+        } catch {
+            mostrarToast('Error: el archivo no es válido');
+        }
+        input.value = '';
+    };
+    reader.readAsText(file);
 }
 
 function renderBiblioteca() {
